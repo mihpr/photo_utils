@@ -13,7 +13,12 @@ SHA256 = "SHA256"
 SHA512 = "SHA512"
 
 import os
-SOURCE_ROOT = os.path.realpath("D:\Photo_archive_001")
+# SOURCE_ROOT = os.path.realpath("D:\Photo_archive_001")
+SOURCE_ROOT = os.path.realpath("E:\Photo_archive_001")
+# SOURCE_ROOT = os.path.realpath("D:\Photo_D7500\print2")
+# SOURCE_ROOT = os.path.realpath("D:\Photo_D7500\Jury")
+
+
 DEST_ROOT = SOURCE_ROOT
 HASH_ALGORITHM = SHA256
 
@@ -21,6 +26,8 @@ HASH_ALGORITHM = SHA256
 import hashlib
 import json
 import datetime
+import posixpath 
+# import npath
 
 def get_file_hash(fname, hash_type):
     if hash_type == MD5:
@@ -44,14 +51,13 @@ hashes_lst = []
 for path, directories, files in os.walk(SOURCE_ROOT):
     for file in files:
         filename, file_extension = os.path.splitext(file)
-        print ("[%s] [%s]" % (filename, file_extension))
         if file_extension.upper() == ".JSON":
             continue
-        src_realpath = os.path.join(os.path.realpath(path), file)
-        hash = get_file_hash(src_realpath, HASH_ALGORITHM)
-        
-        print ("Hash [%s], file [%s]" % (hash, src_realpath))
-        hashes_lst.append({"path": src_realpath, "hash": hash})
+        src_abspath = os.path.join(os.path.abspath(path), file)
+        src_relpath = os.path.relpath(src_abspath, SOURCE_ROOT) # path relative to root, which is easy to compare between different drives"
+        hash = get_file_hash(src_abspath, HASH_ALGORITHM)
+        print ("Hash [%s], file [%s]" % (hash, src_abspath))
+        hashes_lst.append({"posixpath": posixpath.normpath(src_relpath), "hash": hash})
 index["file_data"] = hashes_lst
 
 j = json.dumps(hashes_lst)
