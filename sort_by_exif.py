@@ -11,15 +11,25 @@ The script was tested with Python 3.8.1
 """
 
 import os
-SOURCE_ROOT = os.path.realpath("This PC\D7500\Removable storage")
-DEST_ROOT = os.path.realpath("D:\Photo_D7500\009")
+import filecmp
+SOURCE_ROOT = os.path.realpath(r"D:\Dropbox\Photos\bluetooth")
+DEST_ROOT = os.path.realpath(r"D:\Photo_archive_001\SonyEricsson_k750i")
 
+# True:  copy
+# False: move
+COPY_MODE = True
+
+ARRANGE_YEAR_MONTH =     1
+ARRANGE_YEAR_MONTH_DAY = 2
+
+ARRANGE_MODE = ARRANGE_YEAR_MONTH
 
 ####################################################################################################
 
 import exifread
 import os.path
 import shutil
+import time
 
 print("SOURCE_ROOT = [%s]" % SOURCE_ROOT)
 print("DEST_ROOT = [%s]" % DEST_ROOT)
@@ -41,6 +51,8 @@ def get_date(path_name):
 
 photo_cnt = 0
 photo_with_date_cnt = 0
+identical_photo_cnt = 0
+photo_with_errors_cnt = 0
 for path, directories, files in os.walk(SOURCE_ROOT):
     for file in files:
         # print ('found %s' % os.path.join(path, file))
@@ -52,22 +64,44 @@ for path, directories, files in os.walk(SOURCE_ROOT):
         if date is not None:
             year, month, day = date       
             # Year_Month_Day
-            dest_dir = os.path.join(DEST_ROOT, year, month, "%s_%s_%s" % (year, month, day))
+            if ARRANGE_MODE == ARRANGE_YEAR_MONTH_DAY:
+                dest_dir = os.path.join(DEST_ROOT, year, month, "%s_%s_%s" % (year, month, day))
+            elif ARRANGE_MODE == ARRANGE_YEAR_MONTH:
+                dest_dir = os.path.join(DEST_ROOT, year, month)
             photo_with_date_cnt += 1
         else:
             dest_dir = os.path.join(DEST_ROOT, "unknown_date")
             
         dest_file = os.path.join(dest_dir, file)
-        
+
         if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir)      
-        #os.rename(path_name, dest_file)
+            os.makedirs(dest_dir)
+
+        # Check if such file exist
+        if os.path.isfile(dest_file):
+            # TODO: check if hash is the same
+            if filecmp.cmp(src_realpath, dest_file, shallow=False):
+                #equal
+                print ("File is identical skip [%s-%s-%s] from [%s]" % (year, month, day, src_realpath))
+                photo_cnt += 1
+                identical_photo_cnt += 1
+                continue
+            else:
+                photo_with_errors_cnt += 1
+                #dest_file += "_" + str(time.time())
+                filename, file_extension = os.path.splitext(file)
+                filename += "_" + str(time.time())
+                dest_file = os.path.join(dest_dir, filename + file_extension)
+
         try:
             if date is not None:
-                print ("Copying [%s-%s-%s] from [%s]" % (year, month, day, src_realpath))
+                print ("Copying/moving [%s-%s-%s] from [%s]" % (year, month, day, src_realpath))
             else:
-                print ("Copying from [%s]" % (src_realpath,))
-            shutil.copy(src_realpath, dest_file)
+                print ("Copying/moving [%s]" % (src_realpath,))
+            if COPY_MODE:
+                shutil.copy(src_realpath, dest_file)
+            else:
+                os.rename(src_realpath, dest_file)
             photo_cnt += 1
         except IOError as e:
             print("Unable to copy file. %s" % e)
@@ -79,6 +113,9 @@ print ("\n\n\n")
 print ("Processed [%d] files in total." % photo_cnt)
 print ("Date was detected for [%d] photoes." % photo_with_date_cnt)
 print ("Date was NOT detected for [%d] files." % (photo_cnt - photo_with_date_cnt))
+print ("[%d] identical photoes were found ." % (identical_photo_cnt))
+print ("Potential errors were found in [%d] photoes ." % (photo_with_errors_cnt))
+
 
 
 
