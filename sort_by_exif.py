@@ -7,13 +7,16 @@ How to use this sctipt:
 1) Set source and destination paths below.
 2) Run the script.
 
-The script was tested with Python 3.8.1
+The script was tested with Python 3.9
+At least Python 3.9 is required for the logger.
+
+This script requires https://pypi.org/project/ExifRead/ component to be installed.
 """
 
 import os
 import filecmp
-SOURCE_ROOT = os.path.realpath(r"D:\Dropbox\Photos\bluetooth")
-DEST_ROOT = os.path.realpath(r"D:\Photo_archive_001\SonyEricsson_k750i")
+SOURCE_ROOT = os.path.realpath(r"D:\Photo_archive_001\temp\Nexus5X")
+DEST_ROOT = os.path.realpath(r"D:\Photo_archive_001\Nexus5X")
 
 # True:  copy
 # False: move
