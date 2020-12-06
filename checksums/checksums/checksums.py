@@ -4,6 +4,7 @@ import glob
 import hashlib
 import logging
 import datetime
+from tqdm import tqdm
 from typing import Callable
 
 BLOCK_SIZE = 8192
@@ -94,7 +95,7 @@ def compute_hashes(glob_patterns: list[str],
 
     # Compute hashes for files, skipping directories
     hashes = []
-    for filepath in filepaths:
+    for filepath in tqdm(filepaths):
         if os.path.isfile(filepath):
             hash = compute_file_hash(filepath, algorithm)
             hashes.append({"filepath": filepath, "hash": hash})
@@ -103,7 +104,7 @@ def compute_hashes(glob_patterns: list[str],
                 logger.debug(f"{filepath:s}: {hash:s}")
         else:
             if logger:
-                logger.info(f"{filepath:s} is not a file: skipping.")
+                logger.debug(f"{filepath:s} is not a file: skipping.")
 
     return hashes
 
