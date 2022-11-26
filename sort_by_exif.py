@@ -37,10 +37,19 @@ import time
 print("SOURCE_ROOT = [%s]" % SOURCE_ROOT)
 print("DEST_ROOT = [%s]" % DEST_ROOT)
 
-def get_date(path_name):
+def get_date(file_realpath):
     # Open image file for reading (binary mode)
+    filename, file_extension = os.path.splitext(file_realpath)
+    print("filename = [%s], file_extension = [%s]" % (filename, file_extension))
+    if file_extension in (".XMP", ".xmp"):
+        print("file extension = [%s]" % file_extension)
+        for replaced_ext in (".nef", ".NEF", ".JPG", ".jpg" ".JPEG", ".jpeg"):
+            date = get_date(filename + replaced_ext)
+            if date is not None:
+                return date
+
     try:
-        with open(path_name, 'rb') as f:
+        with open(file_realpath, 'rb') as f:
             # Return Exif tags
             tags = exifread.process_file(f)
             DateTimeOriginal = str(tags["EXIF DateTimeOriginal"])
@@ -48,7 +57,7 @@ def get_date(path_name):
             year, month, day = date.split(":")
             return year, month, day
     except Exception as e:
-        print ("Exception [%s] while getging EXIF DateTimeOriginal from file at path [%s]" % (e, path_name))
+        print ("Exception [%s] while getging EXIF DateTimeOriginal from file at path [%s]" % (e, file_realpath))
     except:
         print("Unexpected error:", sys.exc_info())
 
@@ -57,15 +66,19 @@ photo_with_date_cnt = 0
 identical_photo_cnt = 0
 photo_with_errors_cnt = 0
 for path, directories, files in os.walk(SOURCE_ROOT):
+
+    files_with_dates = []
     for file in files:
+        src_realpath = os.path.join(os.path.realpath(path), file)
+        date = get_date(src_realpath)
+        files_with_dates.append((file, src_realpath, date))
+
+    for file, src_realpath, date in files_with_dates:
         # print ('found %s' % os.path.join(path, file))
 
-        src_realpath = os.path.join(os.path.realpath(path), file)
-        # print ("date", get_date(path_name))
-        
         date = get_date(src_realpath)
         if date is not None:
-            year, month, day = date       
+            year, month, day = date
             # Year_Month_Day
             if ARRANGE_MODE == ARRANGE_YEAR_MONTH_DAY:
                 dest_dir = os.path.join(DEST_ROOT, year, month, "%s_%s_%s" % (year, month, day))
@@ -74,7 +87,7 @@ for path, directories, files in os.walk(SOURCE_ROOT):
             photo_with_date_cnt += 1
         else:
             dest_dir = os.path.join(DEST_ROOT, "unknown_date")
-            
+
         dest_file = os.path.join(dest_dir, file)
 
         if not os.path.exists(dest_dir):
@@ -85,7 +98,10 @@ for path, directories, files in os.walk(SOURCE_ROOT):
             # TODO: check if hash is the same
             if filecmp.cmp(src_realpath, dest_file, shallow=False):
                 #equal
-                print ("File is identical skip [%s-%s-%s] from [%s]" % (year, month, day, src_realpath))
+                if date is not None:
+                    print("File is identical skip [%s-%s-%s] from [%s]" % (year, month, day, src_realpath))
+                else:
+                    print("File is identical skip [Unknown date] from [%s]" % (src_realpath,))
                 photo_cnt += 1
                 identical_photo_cnt += 1
                 continue
