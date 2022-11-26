@@ -38,17 +38,15 @@ print("SOURCE_ROOT = [%s]" % SOURCE_ROOT)
 print("DEST_ROOT = [%s]" % DEST_ROOT)
 
 def get_date(file_realpath):
-    # Open image file for reading (binary mode)
     filename, file_extension = os.path.splitext(file_realpath)
-    print("filename = [%s], file_extension = [%s]" % (filename, file_extension))
     if file_extension in (".XMP", ".xmp"):
-        print("file extension = [%s]" % file_extension)
         for replaced_ext in (".nef", ".NEF", ".JPG", ".jpg" ".JPEG", ".jpeg"):
             date = get_date(filename + replaced_ext)
             if date is not None:
                 return date
 
     try:
+        # Open image file for reading (binary mode)
         with open(file_realpath, 'rb') as f:
             # Return Exif tags
             tags = exifread.process_file(f)
