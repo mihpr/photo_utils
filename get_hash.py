@@ -1,13 +1,13 @@
 """
-This scropt gets file hashes
+This script gets file hashes
 
-How to use this sctipt
+How to use this script
 
-To hash the whole arvhive:
-python get_hash2.py path_to_archive
+To hash the whole archive:
+python get_hash.py path_to_archive
 
 To hash the one specific volume:
-python get_hash2.py path_to_archive volume volume_dir_name
+python get_hash.py path_to_archive volume volume_dir_name
 
 The script was tested with Python 3.9
 """
@@ -30,6 +30,7 @@ HASH_ALGORITHM = SHA256
 READ_BLOCK_SIZE = 4096
 LOG_LEVEL = logging.INFO
 LOG_ENCODING = "utf-8"
+FILTER_OUT_LR_CATALOG = True
 
 ####################################### Globals ####################################################
 
@@ -50,6 +51,13 @@ def get_file_hash(fname, hash_type):
             hash.update(chunk)
     return hash.hexdigest()
 
+def is_lightroom_catalog(files):
+    for file in files:
+            filename, file_extension = os.path.splitext(file)
+            if file_extension == ".lrcat":
+                return True
+    return False
+
 def save_hashes_for_files(root_dir_abspath, file_abspath_lst, hashes_file_abspath):
     logging.info("Saving hashes files in archive root")
     hashes_lst = []
@@ -69,6 +77,11 @@ def save_hashes_for_volume(achive_root_abspath, volume_dir_abspath, hashes_file_
     logging.info("Saving hashes for directory at path [%s]" % volume_dir_abspath)
     hashes_lst = []
     for path, directories, files in os.walk(volume_dir_abspath):
+        if FILTER_OUT_LR_CATALOG and is_lightroom_catalog(files):
+            logging.debug("Skip hashing [%s]" % path)
+            directories.clear()
+            files.clear()
+            continue
         for file in files:
             filename, file_extension = os.path.splitext(file)
             if file_extension.upper() == ".JSON":
@@ -105,7 +118,7 @@ if __name__ == "__main__":
         volume_to_hash = sys.argv[2]
         if not os.path.isdir(os.path.join(archieve_root, volume_to_hash)):
             print("There is no directory: [%s] in archieve_root [%s]" % (volume_to_hash, archieve_root))
-        
+
 
     hash_dir_root = os.path.join(os.path.abspath(archieve_root), "hashes__%s" % start_datetime_txt)
 
@@ -134,7 +147,7 @@ if __name__ == "__main__":
             dir = os.path.relpath(dir_abspath, archieve_root)
             hashes_file = os.path.join(hash_dir_root, dir + "_hashes.json")
             save_hashes_for_volume(archieve_root, dir_abspath, hashes_file)
-            
+
         if len(files) > 0:
             hashes_file = os.path.join(hash_dir_root, "files_hashes.json")
             save_hashes_for_files(archieve_root, files, hashes_file)
