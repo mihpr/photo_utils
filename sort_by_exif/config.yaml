@@ -1,0 +1,4 @@
+# Path to source root
+src_root: '<insert path here>'
+# Path to destination root
+dst_root: '<insert path here>'

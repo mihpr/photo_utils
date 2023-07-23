@@ -1,22 +1,23 @@
 """
-The script copyies photoes and sorts the files by date based on EXIF data.
+The script copies photos and sorts the files by date based on EXIF data.
 It seems that it can get EXIF data out of JPEG and RAW files.
-In case the exif data cannot be detected, it puts the file in to a special 'unknown_date' folder.
+In case the EXIF data cannot be detected, it puts the file in to a special 'unknown_date' folder.
 
-How to use this sctipt:
-1) Set source and destination paths below.
+Before first use:
+$ pip install exifread
+$ pip install pyyaml
+
+How to use this script:
+1) Set all required settings in config.yaml.
 2) Run the script.
 
-The script was tested with Python 3.9
+The script was tested with Python 3.11
 At least Python 3.9 is required for the logger.
 
-This script requires https://pypi.org/project/ExifRead/ component to be installed.
+This script requires the following components to be installed.
+- https://pypi.org/project/ExifRead/
+- https://pypi.org/project/PyYAML/
 """
-
-import os
-import filecmp
-SOURCE_ROOT = os.path.realpath(r"D:\Photo_archive_001\temp\Nexus5X")
-DEST_ROOT = os.path.realpath(r"D:\Photo_archive_001\Nexus5X")
 
 # True:  copy
 # False: move
@@ -29,13 +30,13 @@ ARRANGE_MODE = ARRANGE_YEAR_MONTH
 
 ####################################################################################################
 
+import os
+import filecmp
+import yaml
 import exifread
 import os.path
 import shutil
 import time
-
-print("SOURCE_ROOT = [%s]" % SOURCE_ROOT)
-print("DEST_ROOT = [%s]" % DEST_ROOT)
 
 def get_date(file_realpath):
     filename, file_extension = os.path.splitext(file_realpath)
@@ -58,6 +59,19 @@ def get_date(file_realpath):
         print ("Exception [%s] while getging EXIF DateTimeOriginal from file at path [%s]" % (e, file_realpath))
     except:
         print("Unexpected error:", sys.exc_info())
+
+with open("config.yaml", "r") as f:
+    try:
+        config = yaml.safe_load(f)
+    except yaml.YAMLError as exc:
+        print(exc)
+        exit()
+
+SOURCE_ROOT = os.path.realpath(config['src_root'])
+DEST_ROOT = os.path.realpath(config['dst_root'])
+
+print("SOURCE_ROOT = [%s]" % SOURCE_ROOT)
+print("DEST_ROOT = [%s]" % DEST_ROOT)
 
 photo_cnt = 0
 photo_with_date_cnt = 0
