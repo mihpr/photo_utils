@@ -4,10 +4,10 @@ This script gets file hashes
 How to use this script
 
 To hash the whole archive:
-python get_hash.py path_to_archive
+python get_hash.py <path_to_archive>
 
-To hash the one specific volume:
-python get_hash.py path_to_archive volume volume_dir_name
+To hash the one specific volume inside the archive:
+python get_hash.py <path_to_archive> <volume_dir_name_with_no_path>
 
 The script was tested with Python 3.9
 """
